@@ -9,6 +9,7 @@
 #include "db_parser.h"
 #include "product_parser.h"
 #include "util.h"
+#include "mydatastore.h"
 
 using namespace std;
 struct ProdNameSorter {
@@ -17,6 +18,7 @@ struct ProdNameSorter {
     }
 };
 void displayProducts(vector<Product*>& hits);
+void displayCart(vector<Product*>& hits);
 
 int main(int argc, char* argv[])
 {
@@ -29,7 +31,7 @@ int main(int argc, char* argv[])
      * Declare your derived DataStore object here replacing
      *  DataStore type to your derived type
      ****************/
-    DataStore ds;
+    MyDataStore ds;
 
 
 
@@ -99,10 +101,45 @@ int main(int argc, char* argv[])
                 }
                 done = true;
             }
+            else if ( cmd == "VIEWCART") {
+                string username;
+                ss>>username;
+                User* temp = ds.getUserByName(username);
+                if(temp!=nullptr){
+                    hits=temp->getCart();
+                    displayCart(hits);
+                }else{
+                    cout<<"Invalid username"<<endl;
+                }
+            }
+            else if ( cmd == "BUYCART") {
+                string username;
+                ss>>username;
+                User* temp = ds.getUserByName(username);
+                if(temp!=nullptr){
+                    temp->buyCart();
+                }else{
+                    cout<<"Invalid username"<<endl;
+                }
+            }
+            else if( cmd == "ADD"){
+                string username;
+                ss>>username;
+                User* temp = ds.getUserByName(username);
+                size_t ind;
+                ss>>ind;
+                ind--;
+                if(temp==nullptr){
+                    cout<<"Invalid request"<<endl;
+                    continue;
+                }
+                if(hits.size()==0||ind<0||ind>=hits.size()){
+                    cout<<"Invalid request"<<endl;
+                    continue;
+                }
+                temp->addCart(hits[ind]);
+            }
 	    /* Add support for other commands here */
-
-
-
 
             else {
                 cout << "Unknown command" << endl;
@@ -121,6 +158,21 @@ void displayProducts(vector<Product*>& hits)
     	return;
     }
     std::sort(hits.begin(), hits.end(), ProdNameSorter());
+    for(vector<Product*>::iterator it = hits.begin(); it != hits.end(); ++it) {
+        cout << "Hit " << setw(3) << resultNo << endl;
+        cout << (*it)->displayString() << endl;
+        cout << endl;
+        resultNo++;
+    }
+}
+
+void displayCart(vector<Product*>& hits)
+{
+    int resultNo = 1;
+    if (hits.begin() == hits.end()) {
+    	cout << "No results found!" << endl;
+    	return;
+    }
     for(vector<Product*>::iterator it = hits.begin(); it != hits.end(); ++it) {
         cout << "Hit " << setw(3) << resultNo << endl;
         cout << (*it)->displayString() << endl;
